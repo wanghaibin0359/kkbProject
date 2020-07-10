@@ -11,8 +11,13 @@
     "test": "jest"
   },
   "dependencies": {
+    "@nuxtjs/axios": "^5.11.0",
+    "@nuxtjs/proxy": "^2.0.0",
     "element-ui": "^2.13.2",
-    "nuxt": "^2.13.0"
+    "md5": "^2.2.1",
+    "nuxt": "^2.13.0",
+    "stylus": "^0.54.7",
+    "stylus-loader": "^3.0.2"
   },
   "devDependencies": {
     "@vue/test-utils": "^1.0.3",
@@ -20,5 +25,11 @@
     "babel-jest": "^26.0.1",
     "jest": "^26.0.1",
     "vue-jest": "^3.0.4"
+  },
+  "config": {
+    "nuxt": {
+      "host": "0.0.0.0",
+      "port": "8011"
+    }
   }
 }

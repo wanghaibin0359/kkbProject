@@ -15,6 +15,11 @@ module.exports = appInfo => {
   // use for cookie sign key, should change to your own and keep security
   config.keys = appInfo.name + '_1594026609774_8873'
 
+  config.multipart = {
+    mode: 'file',
+    whitelist: () => true,
+  }
+  config.UPLOAD_DIR = require('path').resolve(__dirname, '..', 'app/public')
   // add your middleware config here
   config.middleware = []
 
@@ -26,5 +31,19 @@ module.exports = appInfo => {
   return {
     ...config,
     ...userConfig,
+    security: {
+      csrf: {
+        enable: false,
+      },
+    },
+    mongoose: {
+      client: {
+        url: 'mongodb://127.0.0.1:27017/whbhub',
+        options: {},
+      },
+    },
+    jwt: {
+      secret: '@whb...dh@',
+    },
   }
 }

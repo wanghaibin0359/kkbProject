@@ -5,5 +5,23 @@
  */
 module.exports = app => {
   const { router, controller } = app
+  const jwt = app.middleware.jwt({ app })
   router.get('/', controller.home.index)
+  router.post('/', controller.home.index)
+  router.get('/captcha', controller.util.captcha)
+  router.get('/sendcode', controller.util.sendcode)
+  router.post('/upladfile', controller.util.upladfile)
+
+
+  router.group({ name: 'user', prefix: '/user' }, router => {
+    const { info, register, login, verify } = controller.user
+    router.post('/register', register)
+    router.post('/login', login)
+    router.get('/info', jwt, info)
+    router.get('/verify', verify)
+  })
+
+  // /user/register
+  // /user/login
+  // /user/follow
 }
