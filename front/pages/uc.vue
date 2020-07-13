@@ -243,9 +243,8 @@ export default {
                     progress: uploadedList.indexOf(name) > -1 ? 100 : 0
                 };
             });
-            console.log(this.chunks);
             await this.uploadChunks();
-            await this.mergeRequest();
+
             return;
             const form = new FormData();
             form.append("name", "file");
@@ -274,23 +273,53 @@ export default {
                     form.append("chunk", chunk.chunk);
                     form.append("hash", chunk.hash);
                     form.append("name", chunk.name);
-                    return form;
-                })
-                .map(form => {
-                    return this.$http.post("/uploadfile", form, {
-                        onUploadProgress: progress => {
-                            let index = form
-                                .get("name")
-                                .split("-")
-                                .pop();
-                            this.chunks[index].progress = Math.ceil(
-                                (progress.loaded / progress.total) * 100
-                            );
-                        }
-                    });
+                    return { form, index: chunk.index };
                 });
-            console.log(requests);
-            await Promise.all(requests);
+            // .map(form => {
+            //     return this.$http.post("/uploadfile", form, {
+            //         onUploadProgress: progress => {
+            //             let index = form
+            //                 .get("name")
+            //                 .split("-")
+            //                 .pop();
+            //             this.chunks[index].progress = Math.ceil(
+            //                 (progress.loaded / progress.total) * 100
+            //             );
+            //         }
+            //     });
+            // });
+            // await Promise.all(requests);
+            await this.sendRequest(requests);
+            await this.mergeRequest();
+        },
+        async sendRequest(requests, limit = 4) {
+            return new Promise((res, rej) => {
+                const len = requests.length;
+                let count = 0;
+                const start = async () => {
+                    const task = requests.shift();
+                    if (task) {
+                        const { form, index } = task;
+                        await this.$http.post("/uploadfile", form, {
+                            onUploadProgress: progress => {
+                                this.chunks[index].progress = Math.ceil(
+                                    (progress.loaded / progress.total) * 100
+                                );
+                            }
+                        });
+                        if (count == len - 1) {
+                            res();
+                        } else {
+                            count++;
+                            start();
+                        }
+                    }
+                };
+                while (limit > 0) {
+                    setTimeout(start, Math.random() * 5000);
+                    limit--;
+                }
+            });
         },
         handleFilerChange(e) {
             const file = e.target.files[0];
