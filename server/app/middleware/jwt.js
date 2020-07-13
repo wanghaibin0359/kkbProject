@@ -8,15 +8,12 @@ module.exports = ({ app }) => async (ctx, next) => {
     return
   }
   const token = ctx.request.header.authorization.replace('Bearer ', '')
-  console.log(token)
   try {
     const ret = jwt.verify(token, app.config.jwt.secret)
-    console.log(ret)
     ctx.state.email = ret.email
     ctx.state.userid = ret._id
     await next()
   } catch (e) {
-    console.log(e)
     if (e.name == 'TokenExpiredError') {
       ctx.body = {
         code: -666,

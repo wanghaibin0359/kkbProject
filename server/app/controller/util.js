@@ -4,15 +4,51 @@ const fse = require('fs-extra')
 const path = require('path')
 const BaseController = require('./base')
 class UtilController extends BaseController {
-  async upladfile() {
+  async uploadfile() {
     const { ctx } = this
-    const [ file ] = ctx.request.files
-    const { name } = ctx.request.body
-    console.log(path.resolve(file.filepath))
-    await fse.move(path.resolve(file.filepath), this.config.UPLOAD_DIR + '/' + file.filename)
+    const [file] = ctx.request.files
+    const { name, hash } = ctx.request.body
+
+    const chunkPath = path.resolve(this.config.UPLOAD_DIR, hash)
+    // const filePath = paths.resolve()
+
+
+    if (!fse.existsSync(chunkPath)) {
+      await fse.mkdir(chunkPath)
+    }
+    // await fse.move(path.resolve(file.filepath), this.config.UPLOAD_DIR + '/' + file.filename)
+    await fse.move(path.resolve(file.filepath), `${chunkPath}/${name}`)
+    this.message('切片上传成功')
+    /*  this.success({
+       mesg:''
+       URL: `/public/${file.filename}`,
+     }) */
+  }
+  async mergefile() {
+    const { ext, size, hash } = this.ctx.request.body
+    const filePath = path.resolve(this.config.UPLOAD_DIR, `${hash}.${ext}`)
+    await this.ctx.service.tools.mergeFile(filePath, hash, size)
+    this.success('完成')
+    console.log(this.app.config.UPLOAD_DIR)
+  }
+  async checkfile() {
+    const { ctx } = this
+    const { ext, hash } = ctx.request.body
+    const filePath = path.resolve(this.config.UPLOAD_DIR, `${hash}.${ext}`)
+    let uploaded = false
+    let uploadedList = []
+    if (fse.existsSync(filePath)) {
+      uploaded = true
+    } else {
+      console.log(path.resolve(this.config.UPLOAD_DIR, hash))
+      uploadedList = await this.getUploadedList(path.resolve(this.config.UPLOAD_DIR, hash))
+    }
     this.success({
-      URL: `/public/${file.filename}`,
+      uploaded, uploadedList
     })
+  }
+  async getUploadedList(path) {
+    return fse.existsSync(path) ? (await fse.readdirSync(path)).filter(name => name[0] !== '.') : []
   }
   async captcha() {
     const captcha = svgCaptcha.create({

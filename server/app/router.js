@@ -10,7 +10,9 @@ module.exports = app => {
   router.post('/', controller.home.index)
   router.get('/captcha', controller.util.captcha)
   router.get('/sendcode', controller.util.sendcode)
-  router.post('/upladfile', controller.util.upladfile)
+  router.post('/uploadfile', controller.util.uploadfile)
+  router.post('/merge', controller.util.mergefile)
+  router.post('/checkfile', controller.util.checkfile)
 
 
   router.group({ name: 'user', prefix: '/user' }, router => {
