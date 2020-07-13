@@ -5,6 +5,9 @@ const path = require('path')
 const BaseController = require('./base')
 class UtilController extends BaseController {
   async uploadfile() {
+    if (Math.random() > 0.6) {
+      return this.ctx.status =500
+    }
     const { ctx } = this
     const [file] = ctx.request.files
     const { name, hash } = ctx.request.body

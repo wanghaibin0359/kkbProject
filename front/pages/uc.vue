@@ -38,7 +38,7 @@
 
 <script>
 import sparkMD5 from "spark-md5";
-const CHUNK_SIZE = 1 * 1024 * 1024;
+const CHUNK_SIZE = 0.1 * 1024 * 1024;
 export default {
     async mounted() {
         const ret = await this.$http.get("user/info");
@@ -273,7 +273,7 @@ export default {
                     form.append("chunk", chunk.chunk);
                     form.append("hash", chunk.hash);
                     form.append("name", chunk.name);
-                    return { form, index: chunk.index };
+                    return { form, index: chunk.index, error: 0 };
                 });
             // .map(form => {
             //     return this.$http.post("/uploadfile", form, {
@@ -292,26 +292,42 @@ export default {
             await this.sendRequest(requests);
             await this.mergeRequest();
         },
+
         async sendRequest(requests, limit = 4) {
             return new Promise((res, rej) => {
                 const len = requests.length;
-                let count = 0;
+                let count = 0,
+                    isStop = false;
                 const start = async () => {
+                    if (isStop) return;
                     const task = requests.shift();
                     if (task) {
                         const { form, index } = task;
-                        await this.$http.post("/uploadfile", form, {
-                            onUploadProgress: progress => {
-                                this.chunks[index].progress = Math.ceil(
-                                    (progress.loaded / progress.total) * 100
-                                );
+                        try {
+                            await this.$http.post("/uploadfile", form, {
+                                onUploadProgress: progress => {
+                                    this.chunks[index].progress = Math.ceil(
+                                        (progress.loaded / progress.total) * 100
+                                    );
+                                }
+                            });
+                            if (count == len - 1) {
+                                res();
+                            } else {
+                                count++;
+                                start();
                             }
-                        });
-                        if (count == len - 1) {
-                            res();
-                        } else {
-                            count++;
-                            start();
+                        } catch (e) {
+                            this.chunks[index].progress = -1;
+                            console.log(task.error);
+                            if (task.error < 3) {
+                                task.error++;
+                                requests.unshift(task);
+                                start();
+                            } else {
+                                isStop = true;
+                                rej();
+                            }
                         }
                     }
                 };
